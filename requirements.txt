@@ -1,0 +1,17 @@
+# Core Web App & DB
+streamlit
+supabase
+pydantic
+gdown
+
+# Deep Learning & Image Processing
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.2+cpu
+torchvision==0.16.2+cpu
+pillow
+numpy<2
+
+# Metrics & Plotting (For Google Colab / training evaluation)
+scikit-learn
+matplotlib
+pandas
