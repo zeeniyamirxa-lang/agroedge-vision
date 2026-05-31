@@ -354,15 +354,28 @@ def screen_scanner():
     if st.button("⚡ Scan Plant Health", type="primary", use_container_width=True, disabled=not has_file):
         with st.spinner("Analyzing plant biomatter..."):
             result = model.analyze_leaf_image(st.session_state["uploaded_file"])
-        # Map structured output fields including top 3 predictions and cropped image
-        st.session_state["prediction"] = {
-            "label": result["disease_name"],
-            "confidence": result["confidence"],
-            "top_predictions": result.get("top_predictions", []),
-            "cropped_image": result.get("cropped_image", None)
-        }
-        database.add_log(result["disease_name"], result["confidence"])
-        st.rerun()
+
+        if result.get("no_leaf"):
+            st.html("""
+            <div style="background:#FFF4ED; border-radius:20px; padding:20px; margin-top:12px;
+                        border:1.5px solid #F5BC5A; text-align:center;">
+              <div style="font-size:28px; margin-bottom:8px;">🍃</div>
+              <div style="font-size:17px; font-weight:700; color:#C8743A; margin-bottom:6px;">No Leaf Detected</div>
+              <div style="font-size:13px; font-weight:500; color:#9B6040;">
+                Please point the camera at a plant leaf and try again.
+              </div>
+            </div>
+            """)
+        else:
+            # Map structured output fields including top 3 predictions and cropped image
+            st.session_state["prediction"] = {
+                "label": result["disease_name"],
+                "confidence": result["confidence"],
+                "top_predictions": result.get("top_predictions", []),
+                "cropped_image": result.get("cropped_image", None)
+            }
+            database.add_log(result["disease_name"], result["confidence"])
+            st.rerun()
 
 
 def screen_diagnostic_report():
