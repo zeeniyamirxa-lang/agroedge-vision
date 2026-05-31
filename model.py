@@ -117,24 +117,24 @@ def load_custom_model():
         return None, None
 
 
-def is_leaf_image(pil_image, min_leaf_fraction: float = 0.03) -> bool:
+def is_leaf_image(pil_image, min_leaf_fraction: float = 0.005) -> bool:
     """
-    Pre-screens an image to check if it likely contains a leaf.
-    Returns False if fewer than `min_leaf_fraction` of pixels look like
-    leaf material (green or yellow/brown), indicating a non-plant photo.
+    Extremely forgiving leaf check.
+    Only rejects if the image has virtually 0% green/brown pixels (like a white wall or grey table).
     """
     img_np = np.array(pil_image.resize((224, 224)))
     r = img_np[:, :, 0].astype(float)
     g = img_np[:, :, 1].astype(float)
     b = img_np[:, :, 2].astype(float)
 
-    is_green        = (g > r) & (g > b) & (g > 40)
-    is_yellow_brown = (r > b) & (g > b) & (np.abs(r.astype(float) - g) < 70) & (r > 40)
-    leaf_pixels     = np.sum(is_green | is_yellow_brown)
-    total_pixels    = img_np.shape[0] * img_np.shape[1]
+    # Relaxed color bounds (removed brightness constraint so dark/shadowy leaves pass easily)
+    is_green = (g > r) & (g >= b)
+    is_yellow_brown = (r > b) & (g >= b)
+    
+    leaf_pixels = np.sum(is_green | is_yellow_brown)
+    total_pixels = img_np.shape[0] * img_np.shape[1]
 
     return (leaf_pixels / total_pixels) >= min_leaf_fraction
-
 
 def clean_and_crop_leaf(pil_image):
     """
@@ -352,7 +352,7 @@ def analyze_leaf_image(image_file) -> dict:
     top_conf = top_predictions[0]["confidence"]
 
     # ── CONFIDENCE FLOOR: if model has no strong opinion, image isn't a leaf ──
-    if top_conf < 0.12:
+    if top_conf < 0.15:
         return {
             "disease_name": "No Leaf Detected",
             "confidence": 0.0,
